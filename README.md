@@ -6,7 +6,7 @@ A side-by-side live demo of [Archetype AI's Newton Machine State Lens](https://w
 
 The dataset features a documented frequency-converter outage on **WT01** in early November 2019. Its healthy peer **WT09** runs the same hardware on the same hill in the same minute-by-minute wind. The demo invites you to watch Newton find the difference.
 
-![demo overview](docs/screenshot.png) <!-- optional; safe if missing -->
+![Penmanshiel live turbine monitor — dashboard showing WT01 (faulty turbine, healthy state in this frame) and WT09 (healthy peer) side by side with the Anomaly Feed in the middle column showing detected/recovered transitions](images/wind-turbine-monitor.png)
 
 ## What the app does
 
