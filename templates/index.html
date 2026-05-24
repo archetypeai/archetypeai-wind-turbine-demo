@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Penmanshiel · live turbine anomaly monitor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@100..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+    <header class="topbar">
+        <div class="brand">
+            <span class="wordmark" aria-label="Archetype AI">
+                {% include '_wordmark.svg' %}
+            </span>
+            <span class="sep"></span>
+            <div>
+                <h1>Penmanshiel · live turbine monitor</h1>
+                <p class="muted">Streaming SCADA replay · classification by Newton Machine State Lens</p>
+            </div>
+        </div>
+        <div class="ctrl">
+            <div class="newton-status" id="newton-status">
+                <span class="newton-dot"></span>
+                <span class="newton-text">Newton idle</span>
+            </div>
+            <span class="muted small" id="status-dot">● connecting</span>
+            <div class="speed-pick">
+                <button data-tps="15">Slow</button>
+                <button data-tps="40" class="active">Normal</button>
+                <button data-tps="120">Fast</button>
+            </div>
+        </div>
+    </header>
+
+    <section class="timeline">
+        <span class="t-from">{{ start }}</span>
+        <div class="track"><div class="cursor" id="t-cursor"></div></div>
+        <span class="t-to">{{ end }}</span>
+        <span class="t-now" id="t-now">—</span>
+    </section>
+
+    <main class="grid">
+        <article class="panel" data-wt="{{ wt_a }}" data-state="analysing">
+            {% with card_id='a' %}{% include '_turbine_card.html' %}{% endwith %}
+        </article>
+
+        <aside class="feed">
+            <h2>Anomaly feed <span class="muted small">live</span></h2>
+            <p class="feed-desc">
+                Newton state transitions. The per-panel verdict updates on every window;
+                an entry appears here only when Newton's KNN votes by a strong margin
+                (winner has ≥3 more votes than the runner-up), filtering out close 3-2
+                ties as inconclusive.
+            </p>
+            <ol id="anomaly-list"></ol>
+            <div class="legend">
+                <span class="dot healthy"></span> healthy
+                <span class="dot fault"></span> fault
+                <span class="dot analysing"></span> analysing
+            </div>
+        </aside>
+
+        <article class="panel" data-wt="{{ wt_b }}" data-state="analysing">
+            {% with card_id='b' %}{% include '_turbine_card.html' %}{% endwith %}
+        </article>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+# Credentials — never commit
+.env
+.env.local
+
+# Dataset — 2 GB, fetch separately (see README)
+data/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+*.egg-info/
+
+# Editors / IDE
+.vscode/
+.idea/
+.claude/
+.DS_Store
+
+# Logs
+*.log
