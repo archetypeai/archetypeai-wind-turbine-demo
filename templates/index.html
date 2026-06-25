@@ -17,7 +17,7 @@
             <span class="sep"></span>
             <div>
                 <h1>Penmanshiel · live turbine monitor</h1>
-                <p class="muted">Streaming SCADA replay · classification by Newton Machine State Lens</p>
+                <p class="muted">Streaming SCADA replay · classification by Newton Direct Query + local KNN</p>
             </div>
         </div>
         <div class="ctrl">
@@ -25,12 +25,8 @@
                 <span class="newton-dot"></span>
                 <span class="newton-text">Newton idle</span>
             </div>
-            <span class="muted small" id="status-dot">● connecting</span>
-            <div class="speed-pick">
-                <button data-tps="15">Slow</button>
-                <button data-tps="40" class="active">Normal</button>
-                <button data-tps="120">Fast</button>
-            </div>
+            <span class="muted small" id="status-dot">● idle</span>
+            <button id="play-toggle" class="play-toggle" aria-label="Start replay">Start</button>
         </div>
     </header>
 

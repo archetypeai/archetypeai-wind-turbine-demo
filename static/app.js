@@ -38,14 +38,13 @@ function setNewtonBadge() {
     let stage = "idle";
     if (states.some((s) => s === "error")) stage = "error";
     else if (states.every((s) => s === "done")) stage = "done";
-    else if (states.some((s) => s === "running" || s === "training")) stage = "running";
-    else if (states.some((s) => s === "starting" || s === "uploading" || s === "focus_ready" || s === "uploaded")) stage = "starting";
+    else if (states.some((s) => s === "running")) stage = "running";
+    else if (states.some((s) => s === "starting")) stage = "starting";
     badge.className = "newton-status " + stage;
     const text = {
         idle: "Newton idle",
-        starting: "Newton warming up…",
+        starting: "Building reference library…",
         running: "Newton analysing",
-        training: "Newton training KNN",
         done: "Newton complete",
         error: "Newton error",
     }[stage] || stage;
@@ -159,8 +158,24 @@ function connect(tps) {
     sse.onmessage = (e) => {
         try { handle(JSON.parse(e.data)); } catch (err) { console.warn("parse", err, e.data); }
     };
-    sse.addEventListener("complete", () => { sse.close(); setStatus("replay complete"); });
+    sse.addEventListener("complete", () => { sse.close(); sse = null; setStatus("ready"); setPlaying(false); });
     sse.onerror = () => { setStatus("disconnected"); };
+    setPlaying(true);
+}
+
+function stop() {
+    if (sse) { sse.close(); sse = null; }
+    setStatus("stopped");
+    setPlaying(false);
+}
+
+const REPLAY_TPS = 15; // fixed "slow" pace — see /api/replay?tps=N
+
+function setPlaying(on) {
+    const btn = document.getElementById("play-toggle");
+    btn.textContent = on ? "Stop" : "Start";
+    btn.setAttribute("aria-label", on ? "Stop replay" : "Start replay");
+    btn.classList.toggle("playing", on);
 }
 
 function setStatus(text) {
@@ -198,7 +213,7 @@ function handle(ev) {
             setNewtonBadge();
             break;
         case "done":
-            setStatus("replay complete");
+            setStatus("ready");
             break;
     }
 }
@@ -237,14 +252,17 @@ function applyTick(ev) {
 }
 
 function pushAnomaly(ev) {
-    const recovery = ev.to === "healthy";
-    const cls = recovery ? "recovery" : ev.severity || "info";
-    const ctx = ev.window_start && ev.window_end
-        ? `window ${ev.window_start.slice(5, 16)} → ${ev.window_end.slice(5, 16)}`
-        : "";
-    appendFeedItem(ev.turbine, cls, ev.message, ctx, ev.ts);
+    // `silent` = the first baseline-healthy read: flip the panel, no feed row.
+    if (!ev.silent) {
+        const recovery = ev.to === "healthy";
+        const cls = recovery ? "recovery" : ev.severity || "info";
+        const ctx = ev.window_start && ev.window_end
+            ? `window ${ev.window_start.slice(5, 16)} → ${ev.window_end.slice(5, 16)}`
+            : "";
+        appendFeedItem(ev.turbine, cls, ev.message, ctx, ev.ts);
+    }
 
-    // Flip panel state on debounced transition.
+    // Flip panel state on debounced transition (incl. the first commit).
     const p = panels[ev.turbine];
     if (!p || !ev.to) return;
     const newState = (ev.to === "fault" || ev.to === "healthy") ? ev.to : "analysing";
@@ -329,14 +347,10 @@ function escapeHtml(s) {
     return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 }
 
-// ---------- speed picker ----------
-document.querySelectorAll(".speed-pick button").forEach((btn) => {
-    btn.addEventListener("click", () => {
-        document.querySelectorAll(".speed-pick button").forEach((b) => b.classList.remove("active"));
-        btn.classList.add("active");
-        connect(btn.dataset.tps);
-    });
+// ---------- start / stop ----------
+document.getElementById("play-toggle").addEventListener("click", () => {
+    if (sse) stop();
+    else connect(REPLAY_TPS);
 });
 
-// auto-start
-connect(document.querySelector(".speed-pick button.active").dataset.tps);
+setStatus("idle");
