@@ -129,12 +129,12 @@ near-instant, so classification begins right away.
 <a id="architecture-direct-query--local-knn"></a>
 ## Architecture: Direct Query + local KNN
 
-There is **no lens and no session** in this demo. Each window is embedded with one stateless `POST /v0.5/query` call per channel against the Omega encoder, and classification is a plain k-nearest-neighbour vote against an in-memory reference library — entirely on our side. This is the [`atai-newton-omega-model`](https://github.com/archetypeai/agent-skills/tree/main/skills/atai-newton-omega-model) skill's recommended downstream pattern.
+There is **no lens and no session** in this demo. Each window is embedded with one stateless `POST /api/lens/query` call per channel against the Omega encoder, and classification is a plain k-nearest-neighbour vote against an in-memory reference library — entirely on our side. This is the [`atai-newton-omega-model`](https://github.com/archetypeai/agent-skills/tree/main/skills/atai-newton-omega-model) skill's recommended downstream pattern.
 
 ```
                 ┌─────────────────────────────────────────────┐
                 │            Archetype AI Newton              │
-                │   POST /v0.5/query   (stateless, no session)│
+                │   POST /api/lens/query   (stateless, no session)│
                 │   model: OmegaEncoder::omega_embeddings_1_4 │
                 │   normalize_input: false                    │
                 └───────────────▲────────────┬────────────────┘
@@ -204,7 +204,7 @@ LICENSE                        # Apache-2.0
 ## Lessons learned
 
 - **Leakage discipline drives accuracy, not model tuning.** The first build classified almost everything backwards because the fault reference (WT05, Mar 7–17) was mostly *non-fault* hours and the only healthy reference was summer-only — so the KNN keyed on season and turbine identity, not on fault. Tightening the fault reference to WT05's sustained ~36 h outage, adding an autumn healthy baseline (WT06 Oct) to match the live season, and capping the healthy class fixed it. `_assert_disjoint()` enforces the rule in code.
-- **No lens, no session — Direct Query is simpler and stateless.** Embedding each window with `POST /v0.5/query` and running KNN locally removes the entire lens-runner orchestration (sessions, runner quotas, push pacing, orphan cleanup) that the earlier lens-based build wrestled with. See the [`atai-newton-omega-model`](https://github.com/archetypeai/agent-skills/tree/main/skills/atai-newton-omega-model) skill.
+- **No lens, no session — Direct Query is simpler and stateless.** Embedding each window with `POST /api/lens/query` and running KNN locally removes the entire lens-runner orchestration (sessions, runner quotas, push pacing, orphan cleanup) that the earlier lens-based build wrestled with. See the [`atai-newton-omega-model`](https://github.com/archetypeai/agent-skills/tree/main/skills/atai-newton-omega-model) skill.
 - **`normalize_input: false` + a fitted global scaler** preserves cross-window amplitude so a stopped turbine looks different from a running one — the skill's recommended downstream pattern.
 
 ## Credits
