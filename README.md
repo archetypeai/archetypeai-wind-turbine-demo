@@ -91,7 +91,8 @@ cd archetypeai-wind-turbine-demo
 cp .env.example .env
 # Edit .env with your ATAI_API_KEY and ATAI_API_ENDPOINT
 
-# Virtual env — use whichever python3 you have (verified on 3.12 and 3.14)
+# Virtual env — use whichever python3 you have (verified on 3.12 and 3.14).
+# No `activate` step: every command below calls .venv/bin/ explicitly.
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 
