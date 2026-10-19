@@ -24,6 +24,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import queue
 import random
 import threading
@@ -111,13 +112,17 @@ class TurbineRequest:
 
 
 def _resolve_endpoint(raw: str) -> str:
-    base = (raw or "").rstrip("/")
+    """Reduce ATAI_API_ENDPOINT to a root and append /api.
+
+    Every API surface lives under one versionless /api prefix, so a single
+    client serves them all. Accept a bare root, a /vX.Y suffix or /api itself,
+    so one .env works whichever form you have.
+    """
+    base = re.sub(r"/api(/lens)?$", "", (raw or "").rstrip("/"))
+    base = re.sub(r"/v[0-9]+(\.[0-9]+)*$", "", base)
     if not base:
         raise RuntimeError("ATAI_API_ENDPOINT is not set")
-    last_seg = base.rsplit("/", 1)[-1]
-    if not last_seg.startswith("v"):
-        base = base + "/v0.5"
-    return base
+    return base + "/api"
 
 
 def window_to_records(wt_id: str, start: str = DEMO_START, end: str = DEMO_END) -> list[dict]:
@@ -250,7 +255,7 @@ def _scale_frame(df: pd.DataFrame) -> pd.DataFrame:
 # ---------- Direct Query Omega embedding + local KNN ----------
 
 # Official Archetype AI Python client, per the atai-newton-omega-model skill's
-# references/_common.py (the /query POST goes through the client's retrying
+# references/_common.py (the /api/lens/query POST goes through the client's retrying
 # transport). Built once, lazily.
 _client_lock = threading.Lock()
 _client: ArchetypeAI | None = None
@@ -269,7 +274,7 @@ def _get_client() -> ArchetypeAI:
 
 
 def _embed_channel(channel: list[float]) -> list[float]:
-    """One /query per channel → flat 768-d vector, via the official client. Retries transient failures."""
+    """One /api/lens/query per channel → flat 768-d vector, via the official client. Retries transient failures."""
     client = _get_client()
     body = json.dumps({
         "query": "",
@@ -281,7 +286,7 @@ def _embed_channel(channel: list[float]) -> list[float]:
     for attempt in range(OMEGA_RETRIES):
         try:
             payload = client.requests_post(
-                f"{client.api_endpoint}/query",
+                f"{client.api_endpoint}/lens/query",
                 data_payload=body,
                 additional_headers={"Content-Type": "application/json"},
             )
