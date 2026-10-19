@@ -91,8 +91,8 @@ cd archetypeai-wind-turbine-demo
 cp .env.example .env
 # Edit .env with your ATAI_API_KEY and ATAI_API_ENDPOINT
 
-# Virtual env
-python3.11 -m venv .venv
+# Virtual env — use whichever python3 you have (verified on 3.12 and 3.14)
+python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 
 # Precompute the n-shot reference library once (writes library.json)
